@@ -79,8 +79,58 @@
   <script>
     document.getElementById('contactForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
-      this.reset();
+      
+      // Lấy dữ liệu từ form
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value
+      };
+      
+      // Hiển thị trạng thái đang gửi
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.textContent = 'Đang gửi...';
+      submitBtn.disabled = true;
+      
+      // Gửi dữ liệu qua API
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Khôi phục trạng thái nút gửi
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+        
+        if (data.success) {
+          // Hiển thị thông báo thành công
+          alert('Cảm ơn bạn đã liên hệ! Email đã được gửi thành công.');
+          this.reset();
+        } else {
+          // Hiển thị lỗi nếu có
+          if (data.errors) {
+            let errorMessage = 'Vui lòng sửa các lỗi sau:\n';
+            data.errors.forEach(error => {
+              errorMessage += `- ${error.msg}\n`;
+            });
+            alert(errorMessage);
+          } else {
+            alert('Có lỗi xảy ra: ' + data.message);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Lỗi:', error);
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+        alert('Đã xảy ra lỗi khi gửi form. Vui lòng thử lại sau.');
+      });
     });
   </script>
 </body>
